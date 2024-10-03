@@ -1,0 +1,2 @@
+﻿  Source.cpp
+E:\Projects\openGL\openGL_test1\openGL_test1\Source.cpp(115,1): error C4700: uninitialized local variable 'EBO' used
