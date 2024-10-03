@@ -93,17 +93,12 @@ int main()
 		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
 		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
-	unsigned int indices[] = {
-		0, 1, 3, // first triangle
-		1, 2, 3	 // second triangle
-	};
-
 
 	// Shader creation with shader class
 	Shader shaderProgram("../vector_shader.vert",
 		"../fragment_shader.frag");
 	// Generate vertex array, vertex buffer and element buffer objects
-	unsigned int VBO, VAO, EBO;
+	unsigned int VBO, VAO;// EBO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	// Bind all buffers to VAO
@@ -111,15 +106,15 @@ int main()
 	// VBO
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	// EBO
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	// Enable positions
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	// Enable textures
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+	// Enable depth buffer
+	glEnable(GL_DEPTH_TEST);
+
 	
 
 	// Generate Textures	
@@ -177,7 +172,7 @@ int main()
 
 		// Set rendering commands
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Bind all textures
 		glActiveTexture(GL_TEXTURE0);
