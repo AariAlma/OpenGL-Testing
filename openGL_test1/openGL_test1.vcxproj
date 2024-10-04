@@ -136,6 +136,10 @@
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="stb_image_implementation.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\openGL\include\camera.h" />
+    <ClInclude Include="..\..\..\..\openGL\include\shader.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

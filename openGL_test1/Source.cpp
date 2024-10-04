@@ -2,39 +2,35 @@
 #include <GLFW/glfw3.h>
 #include <stb_image.h>
 
-#include <iostream>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include <shader.h>
+#include <camera.h>
+
+#include <iostream>
+
 
 // Prototypes
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-
-// Variables
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-float yaw = -90.0f;
-float pitch = 0.0f;
-float fov = 45;
-bool firstMouse = true;
+// Camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 double lastX = 800.0f / 2.0;
 double lastY = 600.0f / 2.0;
+bool firstMouse = true;
+
+// Timing
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
 
 int main() 
 {
-	
-	// Initialize the OpenGL window
-	// ----------------------------
 	// Initializes OpenGL window
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -209,16 +205,17 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, texture2);
 
 		shaderProgram.use();
-		glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+		// Model Matrix
+		glm::mat4 projection = glm::mat4(1.0f);
+		projection = glm::perspective(glm::radians(camera.Zoom), 1280.0f / 720.0f, 0.1f, 100.0f);
+		shaderProgram.setMat4("projection", projection);
+		glm::mat4 view = camera.GetViewMatrix();
 		shaderProgram.setMat4("view", view);
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		// Model Matrix
-		glm::mat4 projection = glm::mat4(1.0f);
-		projection = glm::perspective(glm::radians(fov), 1280.0f / 720.0f, 0.1f, 100.0f);
-		shaderProgram.setMat4("projection", projection);
 		// Draw triangle
 		glBindVertexArray(VAO);
 		for (unsigned int i = 0; i < 10; i++)
@@ -244,29 +241,34 @@ int main()
 	return 0;
 }
 
+
 void framebuffer_size_callback(GLFWwindow* window,int width,int height)
 {
 	glViewport(0, 0, width, height);
 }
 
+
 void processInput(GLFWwindow* window)
 {
 
-	float movementSpeed = 2.5f * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		cameraPos += cameraFront * movementSpeed;
+		camera.ProcessKeyboard(FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		cameraPos -= cameraFront * movementSpeed;
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * movementSpeed;
+		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * movementSpeed;
+		camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
+	float xpos = static_cast<float>(xposIn);
+	float ypos = static_cast<float>(yposIn);
+
 	if (firstMouse)
 	{
 		lastX = xpos;
@@ -279,32 +281,12 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	lastX = xpos;
 	lastY = ypos;
 
-	float sensitivity = 0.1f;
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
-
-	yaw += xoffset;
-	pitch += yoffset;
-
-	if (pitch > 90.0f)
-		pitch = 90.0f;
-	if (pitch < -90.0f)
-		pitch = -90.0f;
-
-	glm::vec3 direction;
-	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	direction.y = sin(glm::radians(pitch));
-	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	cameraFront = glm::normalize(direction);
-
+	camera.ProcessMouseMovement(xoffset, yoffset);
 }
+
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	fov -= (float)yoffset;
-	if (fov < 1.0)
-		fov = 1.0f;
-	if (fov > 45.0f)
-		fov = 45.0f;
+	camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
